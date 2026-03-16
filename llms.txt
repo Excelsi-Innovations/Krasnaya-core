@@ -56,8 +56,22 @@ Key technologies: NestJS, Zod, Drizzle ORM, Redis, BullMQ, TypeScript.
 ### 6. Database Layer (`src/db`)
 - **Purpose**: Persistence for scripts and context.
 - **Key Files**:
-  - `schema.ts`: Drizzle ORM schema for `scripts` table.
+  - `schema.ts`: Drizzle ORM schema for `scripts` and `execution_logs` tables.
   - `drizzle.module.ts`: Configures PostgreSQL connection.
+
+### 7. Management API (`src/modules/management`)
+- **Purpose**: Public API for managing scripts, executing commands, and monitoring outputs.
+- **Key Files**:
+  - `management.service.ts`: Core business logic for CRUD operations.
+  - `script.controller.ts`: Endpoints for script management.
+  - `execution.controller.ts`: Endpoints for execution and monitoring.
+  - `dto/script.dto.ts`: Data transfer objects for validation.
+- **Endpoints**:
+  - `POST /management/scripts` - Create script
+  - `GET /management/scripts` - List scripts
+  - `POST /management/execution/execute` - Execute command manually
+  - `GET /management/execution/logs` - View execution logs
+  - `GET /management/execution/stats` - Dashboard statistics
 
 ## Data Flow
 1. **Ingestion**: Webhook receives payload -> `WebhookService` -> BullMQ Queue.

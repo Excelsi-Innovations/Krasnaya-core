@@ -7,6 +7,7 @@ import { DrizzleModule } from './db/drizzle.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { EventsModule } from './modules/events/events.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
+import { ManagementModule } from './modules/management/management.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { WebhookModule } from './modules/webhook/webhook.module';
     QueueModule,
     EventsModule,
     WebhookModule,
+    ManagementModule,
   ],
   controllers: [],
   providers: [],

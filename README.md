@@ -185,6 +185,43 @@ src/
     -   Simulates AST execution (mock mode).
     -   Body: `{ "ast": AST_JSON, "context": {} }`
 
+### Management API Endpoints
+
+#### Script Management (CRUD)
+
+-   **POST** `/management/scripts`
+    -   Create a new script.
+    -   Body: `{ name, description, version, ast, isActive, metadata }`
+
+-   **GET** `/management/scripts`
+    -   List all scripts.
+
+-   **GET** `/management/scripts/:id`
+    -   Get a specific script by ID.
+
+-   **PUT** `/management/scripts/:id`
+    -   Update a script.
+    -   Body: `{ name, description, version, ast, isActive, metadata }`
+
+-   **DELETE** `/management/scripts/:id`
+    -   Delete a script.
+
+#### Execution Management
+
+-   **POST** `/management/execution/execute`
+    -   Execute a script manually.
+    -   Body: `{ scriptId, platform, chatId, userId?, context? }`
+
+-   **GET** `/management/execution/logs`
+    -   Get execution logs.
+    -   Query: `scriptId`, `limit`, `offset`
+
+-   **GET** `/management/execution/logs/:id`
+    -   Get a specific execution log.
+
+-   **GET** `/management/execution/stats`
+    -   Get dashboard statistics.
+
 ---
 
 ## 📚 Documentation
