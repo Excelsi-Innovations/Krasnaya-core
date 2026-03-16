@@ -185,12 +185,24 @@ src/
     -   Simulates AST execution (mock mode).
     -   Body: `{ "ast": AST_JSON, "context": {} }`
 
+### Authentication Endpoints
+
+-   **POST** `/auth/register`
+    -   Register a new user.
+    -   Body: `{ username, password }`
+
+-   **POST** `/auth/login`
+    -   Login and get JWT token.
+    -   Body: `{ username, password }`
+
 ### Management API Endpoints
+
+*Note: All management endpoints require JWT authentication via Bearer token.*
 
 #### Script Management (CRUD)
 
 -   **POST** `/management/scripts`
-    -   Create a new script.
+    -   Create a new script (requires auth).
     -   Body: `{ name, description, version, ast, isActive, metadata }`
 
 -   **GET** `/management/scripts`

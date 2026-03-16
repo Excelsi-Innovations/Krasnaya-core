@@ -63,15 +63,25 @@ Key technologies: NestJS, Zod, Drizzle ORM, Redis, BullMQ, TypeScript.
 - **Purpose**: Public API for managing scripts, executing commands, and monitoring outputs.
 - **Key Files**:
   - `management.service.ts`: Core business logic for CRUD operations.
-  - `script.controller.ts`: Endpoints for script management.
-  - `execution.controller.ts`: Endpoints for execution and monitoring.
+  - `script.controller.ts`: Endpoints for script management (protected by JWT).
+  - `execution.controller.ts`: Endpoints for execution and monitoring (protected by JWT).
   - `dto/script.dto.ts`: Data transfer objects for validation.
 - **Endpoints**:
-  - `POST /management/scripts` - Create script
-  - `GET /management/scripts` - List scripts
-  - `POST /management/execution/execute` - Execute command manually
-  - `GET /management/execution/logs` - View execution logs
-  - `GET /management/execution/stats` - Dashboard statistics
+  - `POST /management/scripts` - Create script (requires auth)
+  - `GET /management/scripts` - List scripts (requires auth)
+  - `POST /management/execution/execute` - Execute command manually (requires auth)
+  - `GET /management/execution/logs` - View execution logs (requires auth)
+  - `GET /management/execution/stats` - Dashboard statistics (requires auth)
+
+### 8. Authentication Module (`src/modules/auth`)
+- **Purpose**: JWT-based authentication for the Management API.
+- **Key Files**:
+  - `auth.service.ts`: User validation and token generation.
+  - `jwt.strategy.ts`: Passport strategy for JWT validation.
+  - `auth.controller.ts`: Login and register endpoints.
+- **Endpoints**:
+  - `POST /auth/register` - Create a new user
+  - `POST /auth/login` - Get access token
 
 ## Data Flow
 1. **Ingestion**: Webhook receives payload -> `WebhookService` -> BullMQ Queue.
