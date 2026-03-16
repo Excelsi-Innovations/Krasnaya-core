@@ -76,6 +76,95 @@ Key technologies: NestJS, Zod, Drizzle ORM, Redis, BullMQ, TypeScript.
 - **Location**: `*.spec.ts` files alongside implementation.
 - **Run**: `npm run test`
 
+## Code Examples
+
+### 1. Defining an AST (JSON)
+```json
+{
+  "type": "sequence",
+  "nodes": [
+    {
+      "type": "say",
+      "text": "Hello! I am Krasnaya Bot."
+    },
+    {
+      "type": "if",
+      "condition": { "type": "eq", "left": "{{user.premium}", "right": true },
+      "then": [
+        { "type": "say", "text": "Welcome back, Premium user!" }
+      ],
+      "else": [
+        { "type": "say", "text": "Consider upgrading to Premium." }
+      ]
+    }
+  ]
+}
+```
+
+### 2. Zod Schema Validation (TypeScript)
+```typescript
+// src/shared/schemas/ast.schema.ts
+import { z } from 'zod';
+
+export const UIOpSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('say'),
+    text: z.string(),
+  }),
+  z.object({
+    type: z.literal('prompt'),
+    text: z.string(),
+    variable: z.string(),
+  }),
+]);
+
+export type UIOp = z.infer<typeof UIOpSchema>;
+```
+
+### 3. Adapter Implementation (Discord)
+```typescript
+// src/modules/adapters/discord.adapter.ts
+async sendText(chatId: string, text: string): Promise<void> {
+  if (!this.isReady) throw new Error('Discord client not ready');
+  const channel = await this.client.channels.fetch(chatId);
+  if (channel instanceof TextChannel) {
+    await channel.send(text);
+  }
+}
+```
+
+### 4. Interpreter Execution Logic
+```typescript
+// src/modules/interpreter/interpreter.service.ts
+async executeNode(node: Node, context: ExecutionContext): Promise<{ waiting: boolean }> {
+  if ('type' in node) {
+    switch (node.type) {
+      case 'say':
+        const adapter = this.adapterFactory.getAdapter(context.platform);
+        await adapter.sendText(context.chatId, node.text);
+        break;
+      case 'prompt':
+        // Send prompt and wait for input
+        return { waiting: true };
+    }
+  }
+  return { waiting: false };
+}
+```
+
+### 5. Webhook Controller
+```typescript
+// src/modules/webhook/webhook.controller.ts
+@Post(':platform')
+async handleWebhook(
+  @Param('platform') platform: string,
+  @Body() payload: any,
+) {
+  await this.webhookService.processWebhook(platform, payload);
+  return { status: 'ok' };
+}
+```
+
 ## LLM Interaction Guide
 - To modify AST logic, edit `src/shared/schemas/ast.schema.ts`.
 - To add a new platform, implement `BotAdapter` in `src/modules/adapters`.
