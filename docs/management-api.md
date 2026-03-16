@@ -8,7 +8,58 @@ http://localhost:3000/management
 ```
 
 ## Authentication
-*Note: Authentication is planned for future versions. Currently, the API is open.*
+
+The Management API uses JWT (JSON Web Tokens) for authentication.
+
+### 1. Register a User
+**POST** `/auth/register`
+
+**Request Body:**
+```json
+{
+  "username": "admin",
+  "password": "securepassword123"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "id": 1,
+  "username": "admin"
+}
+```
+
+### 2. Login and Get Token
+**POST** `/auth/login`
+
+**Request Body:**
+```json
+{
+  "username": "admin",
+  "password": "securepassword123"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### 3. Use the Token
+Include the token in the Authorization header for all protected endpoints:
+
+```
+Authorization: Bearer <your-jwt-token>
+```
+
+**Example:**
+```bash
+curl -X GET http://localhost:3000/management/scripts \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
 
 ## Script Management Endpoints
 

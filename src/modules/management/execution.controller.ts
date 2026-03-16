@@ -1,13 +1,15 @@
 import { 
   Controller, Get, Post, Body, Param, Query, 
-  UsePipes, ValidationPipe, HttpCode, HttpStatus 
+  UsePipes, ValidationPipe, HttpCode, HttpStatus, UseGuards 
 } from '@nestjs/common';
 import { ManagementService } from './management.service';
 import { ExecuteCommandDto } from './dto/script.dto';
 import { ExecutionLog } from '../../db/schema';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('management/execution')
 @UsePipes(new ValidationPipe())
+@UseGuards(AuthGuard('jwt'))
 export class ExecutionController {
   constructor(private readonly managementService: ManagementService) {}
 

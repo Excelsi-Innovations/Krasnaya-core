@@ -8,6 +8,7 @@ import { QueueModule } from './modules/queue/queue.module';
 import { EventsModule } from './modules/events/events.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
 import { ManagementModule } from './modules/management/management.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ManagementModule } from './modules/management/management.module';
     EventsModule,
     WebhookModule,
     ManagementModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],
