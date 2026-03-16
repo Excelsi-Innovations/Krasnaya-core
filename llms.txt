@@ -1,0 +1,82 @@
+# Krasnaya-Core LLMs.txt
+
+This file provides a structured overview of the Krasnaya-Core codebase for AI agents.
+
+## Project Overview
+Krasnaya-Core is a NestJS-based bot intelligence layer that executes JSON-defined ASTs across multiple platforms.
+Key technologies: NestJS, Zod, Drizzle ORM, Redis, BullMQ, TypeScript.
+
+## Core Modules
+
+### 1. AST Module (`src/modules/ast`)
+- **Purpose**: Validates and stores bot scripts.
+- **Key Files**:
+  - `ast.schema.ts`: Zod schemas for `PrimitiveOp`, `UIOp`, `FlowOp`.
+  - `ast.service.ts`: Validates raw JSON against Zod schemas.
+  - `ast.controller.ts`: Provides `/ast/validate` and `/ast/debug/execute` endpoints.
+- **Schemas**:
+  - `PrimitiveOp`: `sum`, `eq`, `gt` operations.
+  - `UIOp`: `say`, `prompt`, `media` operations.
+  - `FlowOp`: `if`, `sequence`, `wait_input` operations.
+
+### 2. Interpreter Module (`src/modules/interpreter`)
+- **Purpose**: Executes the AST and manages state.
+- **Key Files**:
+  - `interpreter.service.ts`: Core execution logic (`processStep`, `executeNode`).
+  - `expression.service.ts`: Evaluates mathematical and logical expressions.
+- **Execution Flow**:
+  1. Load context from Redis.
+  2. Locate node at current cursor path.
+  3. Execute node (send message, wait for input, evaluate condition).
+  4. Update cursor and save context.
+
+### 3. Adapter Module (`src/modules/adapters`)
+- **Purpose**: Translates generic operations to platform-specific APIs.
+- **Key Files**:
+  - `telegram.adapter.ts`: Uses `axios` for Telegram Bot API.
+  - `discord.adapter.ts`: Uses `discord.js` for Discord API.
+  - `adapter.factory.ts`: Returns the correct adapter based on platform ID.
+- **Interface**: `BotAdapter` defines `sendText`, `sendMenu`, `sendMedia`, `normalizeEvent`.
+
+### 4. Webhook Module (`src/modules/webhook`)
+- **Purpose**: Ingests incoming webhook events.
+- **Key Files**:
+  - `webhook.controller.ts`: Handles POST requests at `/webhook/:platform`.
+  - `webhook.service.ts`: Normalizes events and pushes to BullMQ queue.
+- **Endpoints**:
+  - `POST /webhook/telegram`
+  - `POST /webhook/discord`
+
+### 5. Queue Module (`src/modules/queue`)
+- **Purpose**: Asynchronous processing of events.
+- **Key Files**:
+  - `queue.service.ts`: Producer for `incoming-messages` queue.
+  - `message.processor.ts`: Consumer (worker) that processes messages.
+
+### 6. Database Layer (`src/db`)
+- **Purpose**: Persistence for scripts and context.
+- **Key Files**:
+  - `schema.ts`: Drizzle ORM schema for `scripts` table.
+  - `drizzle.module.ts`: Configures PostgreSQL connection.
+
+## Data Flow
+1. **Ingestion**: Webhook receives payload -> `WebhookService` -> BullMQ Queue.
+2. **Processing**: `MessageProcessor` pulls job -> `InterpreterService`.
+3. **Execution**: `InterpreterService` loads AST from DB, loads Context from Redis.
+4. **Action**: `InterpreterService` uses `Adapter` to send UI operations.
+5. **State**: Context is updated and saved to Redis.
+
+## Common Patterns
+- **Zod Validation**: All AST nodes are validated using Zod schemas before execution.
+- **Dependency Injection**: NestJS modules are used extensively for service injection.
+- **Stateless Execution**: Redis stores conversation state; server remains stateless.
+
+## Testing
+- **Framework**: Jest
+- **Location**: `*.spec.ts` files alongside implementation.
+- **Run**: `npm run test`
+
+## LLM Interaction Guide
+- To modify AST logic, edit `src/shared/schemas/ast.schema.ts`.
+- To add a new platform, implement `BotAdapter` in `src/modules/adapters`.
+- To change database schema, edit `src/db/schema.ts` and run `npx drizzle-kit push`.
