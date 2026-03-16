@@ -187,6 +187,12 @@ src/
 
 ---
 
+## 📚 Documentation
+
+-   **[Adapters](docs/adapters.md)**: Guide on platform adapters (Discord, Telegram) and creating new ones.
+-   **[Environment Variables](docs/env.md)**: Configuration and `.env` setup.
+-   **[Maintenance](docs/maintenance.md)**: Database migrations, testing, and deployment.
+
 ## 🤖 LLMs.txt
 
 A specialized `llms.txt` file is provided to help AI agents understand the codebase structure and patterns. See `llms.txt` in the root directory.
