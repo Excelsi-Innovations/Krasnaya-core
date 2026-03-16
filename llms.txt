@@ -6,6 +6,25 @@ This file provides a structured overview of the Krasnaya-Core codebase for AI ag
 Krasnaya-Core is a NestJS-based bot intelligence layer that executes JSON-defined ASTs across multiple platforms.
 Key technologies: NestJS, Zod, Drizzle ORM, Redis, BullMQ, TypeScript.
 
+## Architecture Overview
+
+### Core Layers
+1. **AST Layer** - Script definition and validation
+2. **Interpreter Layer** - Script execution engine
+3. **Adapter Layer** - Platform-specific integrations
+4. **Ingestion Layer** - Webhook and queue processing
+5. **Management Layer** - API for script management
+6. **Persistence Layer** - Database and cache
+
+### Data Flow
+```
+Webhook → Queue → Interpreter → Adapter → Platform
+                    ↓
+              Redis (State)
+                    ↓
+              PostgreSQL (Logs)
+```
+
 ## Core Modules
 
 ### 1. AST Module (`src/modules/ast`)
@@ -90,10 +109,79 @@ Key technologies: NestJS, Zod, Drizzle ORM, Redis, BullMQ, TypeScript.
 4. **Action**: `InterpreterService` uses `Adapter` to send UI operations.
 5. **State**: Context is updated and saved to Redis.
 
+## Database Schema
+
+### Scripts Table
+```sql
+CREATE TABLE scripts (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description VARCHAR(1000),
+  version VARCHAR(50) NOT NULL,
+  ast JSONB NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Execution Logs Table
+```sql
+CREATE TABLE execution_logs (
+  id SERIAL PRIMARY KEY,
+  script_id INTEGER REFERENCES scripts(id),
+  platform VARCHAR(50) NOT NULL,
+  chat_id VARCHAR(255) NOT NULL,
+  user_id VARCHAR(255),
+  input TEXT,
+  output TEXT,
+  status VARCHAR(50) NOT NULL,
+  error_message TEXT,
+  execution_time INTEGER,
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
 ## Common Patterns
-- **Zod Validation**: All AST nodes are validated using Zod schemas before execution.
-- **Dependency Injection**: NestJS modules are used extensively for service injection.
-- **Stateless Execution**: Redis stores conversation state; server remains stateless.
+
+### 1. Dependency Injection
+```typescript
+@Module({
+  imports: [OtherModule],
+  providers: [MyService],
+  exports: [MyService],
+})
+export class MyModule {}
+```
+
+### 2. Zod Validation
+```typescript
+@UsePipes(new ValidationPipe())
+async create(@Body() createDto: CreateScriptDto) {
+  // DTO is automatically validated
+}
+```
+
+### 3. Guards (Authentication)
+```typescript
+@Controller('management/scripts')
+@UseGuards(AuthGuard('jwt'))
+export class ScriptController {}
+```
+
+### 4. Async Processing
+```typescript
+// Producer
+await this.queueService.addMessage({ platformEvent, scriptName });
+
+// Consumer
+@Process('process-message')
+async handleJob(job: Job) {
+  // Process message
+}
+```
 
 ## Testing
 - **Framework**: Jest
@@ -190,6 +278,50 @@ async handleWebhook(
 ```
 
 ## LLM Interaction Guide
-- To modify AST logic, edit `src/shared/schemas/ast.schema.ts`.
-- To add a new platform, implement `BotAdapter` in `src/modules/adapters`.
-- To change database schema, edit `src/db/schema.ts` and run `npx drizzle-kit push`.
+
+### Modify AST Logic
+Edit: `src/shared/schemas/ast.schema.ts`
+
+### Add New Platform
+1. Create adapter: `src/modules/adapters/{platform}.adapter.ts`
+2. Update factory: `src/modules/adapters/adapter.factory.ts`
+3. Register in module: `src/modules/adapters/adapters.module.ts`
+
+### Change Database Schema
+1. Edit: `src/db/schema.ts`
+2. Run: `npx drizzle-kit push`
+3. For production: `npx drizzle-kit generate`
+
+### Add New API Endpoint
+1. Create DTO: `src/modules/management/dto/`
+2. Create service method: `src/modules/management/management.service.ts`
+3. Create controller endpoint: `src/modules/management/{controller}.ts`
+4. Protect with JWT: `@UseGuards(AuthGuard('jwt'))`
+
+### Debug Execution
+Use: `POST /ast/debug/execute` endpoint for testing AST without platform integration.
+
+## API Quick Reference
+
+### Authentication
+- `POST /auth/register` - Register user
+- `POST /auth/login` - Get JWT token
+
+### Script Management
+- `POST /management/scripts` - Create script (requires auth)
+- `GET /management/scripts` - List scripts (requires auth)
+- `GET /management/scripts/:id` - Get script (requires auth)
+- `PUT /management/scripts/:id` - Update script (requires auth)
+- `DELETE /management/scripts/:id` - Delete script (requires auth)
+
+### Execution
+- `POST /management/execution/execute` - Run script (requires auth)
+- `GET /management/execution/logs` - View logs (requires auth)
+- `GET /management/execution/stats` - Dashboard (requires auth)
+
+### Webhooks
+- `POST /webhook/:platform` - Receive events (no auth)
+
+### AST Validation
+- `POST /ast/validate` - Validate script (no auth)
+- `POST /ast/debug/execute` - Debug execution (no auth)
